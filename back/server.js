@@ -14,7 +14,12 @@ connectDB();
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+    cors: {
+        origin: 'http://localhost:5173', // URL del frontend
+        methods: ['GET', 'POST'],
+    },
+});
 
 // Middleware
 app.use(cors());
@@ -28,14 +33,21 @@ app.use('/api/messages', messageRoutes);
 io.on('connection', (socket) => {
     console.log('Nuevo cliente conectado');
 
+    // Manejar mensaje enviado desde el cliente
+    socket.on('chat message', (msg) => {
+        console.log('Mensaje recibido:', msg);
+
+        // Reenviar mensaje a todos los clientes
+        io.emit('chat message', msg);
+    });
+
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');
     });
-
 });
 
 // Iniciar el servidor
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5173;
 server.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
